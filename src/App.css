@@ -24,8 +24,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .error-banner {
@@ -54,4 +58,33 @@
   .main-content {
     grid-template-columns: 1fr;
   }
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 20px;
+}
+
+.error-banner.offline {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+
+.error-banner.transient {
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.error-banner p {
+  margin: 2px 0 0 0;
+  font-size: 13px;
+}
+.error-banner strong {
+  font-size: 14px;
 }

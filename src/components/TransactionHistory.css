@@ -1,0 +1,27 @@
+/* TransactionHistory.css */
+.history-list {
+  max-height: 320px;
+  overflow-y: auto;
+  border-top: 1px solid var(--color-border);
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.history-addresses {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-secondary);
+}
+.history-amount {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}

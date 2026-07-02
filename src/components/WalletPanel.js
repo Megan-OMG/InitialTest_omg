@@ -1,52 +1,113 @@
-import React, { useState } from 'react';
-import './TransactionForm.css';
-import { createWallet, fetchBalance } from '../api/blockchain.api';
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { createWallet, fetchBalance } from "../api/blockchain.api";
+import "./WalletPanel.css";
 
-const WalletPanel = () => {
+const CopyButton = ({ text }) => {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <button type="button" className="copy-btn" onClick={handleCopy}>
+      {copied ? "Copied" : "Copy"}
+    </button>
+  );
+};
+
+const WalletPanel = ({ onWalletCreated }) => {
   const [wallet, setWallet] = useState(null);
   const [balance, setBalance] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [error, setError] = useState("");
+  const [revealed, setRevealed] = useState(false);
 
   const handleCreateWallet = async () => {
     setLoading(true);
-    setMessage('');
-
+    setError("");
+    setRevealed(false);
     try {
-      const response = await createWallet();
-      const walletData = response;
+      const walletData = await createWallet();
       setWallet(walletData);
       const balanceResponse = await fetchBalance(walletData.publicKey);
       setBalance(balanceResponse.balance);
-      setMessage('Wallet created successfully');
+      onWalletCreated?.(walletData);
     } catch (err) {
-      setMessage(err.message || 'Failed to create wallet');
+      setError(err.message || "Failed to create wallet");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="transaction-form">
+    <div className="wallet-panel card">
       <h2 className="panel-title">Wallet Studio</h2>
-      <p className="panel-subtitle">Generate a key pair and inspect balance.</p>
+      <p className="panel-subtitle">
+        Generate a key pair and inspect its balance.
+      </p>
 
-      <button type="button" className="submit-button" onClick={handleCreateWallet} disabled={loading}>
-        {loading ? 'Generating...' : 'Create Wallet'}
-      </button>
+      <motion.button
+        type="button"
+        className="btn-primary"
+        onClick={handleCreateWallet}
+        disabled={loading}
+        whileTap={{ scale: 0.98 }}
+        style={{ width: "100%" }}
+      >
+        {loading ? "Generating…" : "Create wallet"}
+      </motion.button>
 
-      {message && <div className={`form-message ${message.includes('success') ? 'success' : 'error'}`}>{message}</div>}
+      {error && <div className="inline-message error">{error}</div>}
 
-      {wallet && (
-        <div className="form-group">
-          <label>Public Key</label>
-          <div className="field-value hash">{wallet.publicKey}</div>
-          <label>Private Key</label>
-          <div className="field-value hash">{wallet.privateKey}</div>
-          <label>Balance</label>
-          <div className="field-value">{balance}</div>
-        </div>
-      )}
+      <AnimatePresence>
+        {wallet && (
+          <motion.div
+            className="wallet-details"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <div className="field-row">
+              <label>Public key</label>
+              <CopyButton text={wallet.publicKey} />
+            </div>
+            <div className="field-value hash">{wallet.publicKey}</div>
+
+            <div className="field-row">
+              <label>Private key</label>
+              {revealed ? (
+                <CopyButton text={wallet.privateKey} />
+              ) : (
+                <button
+                  type="button"
+                  className="reveal-btn"
+                  onClick={() => setRevealed(true)}
+                >
+                  Reveal
+                </button>
+              )}
+            </div>
+            {revealed ? (
+              <div className="field-value hash">{wallet.privateKey}</div>
+            ) : (
+              <div className="field-value hash masked">
+                •••••••••••••••••••••••••••••••••
+              </div>
+            )}
+            <p className="key-warning">
+              Never share your private key. Anyone with it can spend your funds.
+            </p>
+
+            <div className="field-row">
+              <label>Balance</label>
+            </div>
+            <div className="field-value balance">{balance}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

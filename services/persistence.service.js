@@ -1,3 +1,4 @@
+const { Blockchain, Block, Transaction } = require("../models/blockchain");
 /**
  * Persistence service for the assessment blockchain demo.
  *
@@ -26,22 +27,21 @@
  * }
  */
 
-const fs = require('fs/promises');
-const path = require('path');
-const logger = require('../utils/logger');
-const { Blockchain, Transaction } = require('../models/blockchain');
+const fs = require("fs/promises");
+const path = require("path");
+const logger = require("../utils/logger");
 
-const defaultStatePath = process.env.BLOCKCHAIN_STATE_PATH || path.join(process.cwd(), 'blockchain.json');
+const defaultStatePath =
+  process.env.BLOCKCHAIN_STATE_PATH ||
+  path.join(process.cwd(), "blockchain.json");
 
 const resolveStatePath = () => defaultStatePath;
 
 const restoreBlock = (blockData) => {
   const block = new Blockchain(1, 100);
-  const restoredTransactions = (blockData.transactions || []).map((tx) => new Transaction(
-    tx.fromAddress,
-    tx.toAddress,
-    tx.amount,
-  ));
+  const restoredTransactions = (blockData.transactions || []).map(
+    (tx) => new Transaction(tx.fromAddress, tx.toAddress, tx.amount),
+  );
 
   restoredTransactions.forEach((tx, index) => {
     const source = blockData.transactions[index] || {};
@@ -63,14 +63,20 @@ const restoreBlock = (blockData) => {
 };
 
 const normalizeState = (state) => {
-  if (!state || typeof state !== 'object') {
+  if (!state || typeof state !== "object") {
     return null;
   }
 
   const chain = Array.isArray(state.chain) ? state.chain : [];
-  const pendingTransactions = Array.isArray(state.pendingTransactions) ? state.pendingTransactions : [];
-  const difficulty = Number.isFinite(Number(state.difficulty)) ? Number(state.difficulty) : 2;
-  const miningReward = Number.isFinite(Number(state.miningReward)) ? Number(state.miningReward) : 100;
+  const pendingTransactions = Array.isArray(state.pendingTransactions)
+    ? state.pendingTransactions
+    : [];
+  const difficulty = Number.isFinite(Number(state.difficulty))
+    ? Number(state.difficulty)
+    : 2;
+  const miningReward = Number.isFinite(Number(state.miningReward))
+    ? Number(state.miningReward)
+    : 100;
 
   return {
     chain,
@@ -110,33 +116,38 @@ const save = async (blockchain) => {
  */
 const load = async () => {
   try {
-    const raw = await fs.readFile(resolveStatePath(), 'utf8');
+    const raw = await fs.readFile(resolveStatePath(), "utf8");
     const parsed = JSON.parse(raw);
     const normalized = normalizeState(parsed);
 
     if (!normalized) {
-      logger.warn('Persisted blockchain state was empty; starting fresh.');
+      logger.warn("Persisted blockchain state was empty; starting fresh.");
       return null;
     }
 
-    const blockchain = new Blockchain(normalized.difficulty, normalized.miningReward);
+    const blockchain = new Blockchain(
+      normalized.difficulty,
+      normalized.miningReward,
+    );
     blockchain.chain = normalized.chain.map((entry) => {
       const restored = new Block(entry.timestamp, [], entry.previousHash);
       restored.nonce = entry.nonce || 0;
       restored.hash = entry.hash || restored.hash;
       restored.transactions = (entry.transactions || []).map((tx) => {
-        const restoredTx = new Transaction(tx.fromAddress, tx.toAddress, tx.amount);
+        const restoredTx = new Transaction(
+          tx.fromAddress,
+          tx.toAddress,
+          tx.amount,
+        );
         restoredTx.timestamp = tx.timestamp || restoredTx.timestamp;
         restoredTx.signature = tx.signature || restoredTx.signature;
         return restoredTx;
       });
       return restored;
     });
-    blockchain.pendingTransactions = normalized.pendingTransactions.map((tx) => new Transaction(
-      tx.fromAddress,
-      tx.toAddress,
-      tx.amount,
-    ));
+    blockchain.pendingTransactions = normalized.pendingTransactions.map(
+      (tx) => new Transaction(tx.fromAddress, tx.toAddress, tx.amount),
+    );
 
     blockchain.pendingTransactions.forEach((tx, index) => {
       const source = normalized.pendingTransactions[index] || {};
@@ -145,14 +156,14 @@ const load = async () => {
     });
 
     if (!blockchain.isChainValid()) {
-      logger.warn('Persisted blockchain state was invalid; starting fresh.');
+      logger.warn("Persisted blockchain state was invalid; starting fresh.");
       return null;
     }
 
-    logger.info('Restored blockchain state from disk');
+    logger.info("Restored blockchain state from disk");
     return blockchain;
   } catch (error) {
-    if (error.code === 'ENOENT') {
+    if (error.code === "ENOENT") {
       return null;
     }
 
@@ -170,8 +181,10 @@ const clear = async () => {
   try {
     await fs.unlink(resolveStatePath());
   } catch (error) {
-    if (error.code !== 'ENOENT') {
-      logger.warn(`Unable to clear persisted blockchain state: ${error.message}`);
+    if (error.code !== "ENOENT") {
+      logger.warn(
+        `Unable to clear persisted blockchain state: ${error.message}`,
+      );
     }
   }
 };

@@ -3,6 +3,7 @@ const path = require("path");
 
 const config = require("./config");
 const logger = require("./utils/logger");
+const models = require("./models");
 
 const corsMiddleware = require("./middleware/cors.middleware");
 const requestLogger = require("./middleware/logger.middleware");
@@ -24,6 +25,17 @@ app.use(requestLogger);
 app.use("/health", healthRoutes);
 
 // ── API routes ─────────────────────────────────────────────────────────────────
+app.use("/api", (req, res, next) => {
+  res.set(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate",
+  );
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+  const models = require("./models");
+
+  next();
+});
 app.use("/api", apiLimiter, apiRoutes);
 
 // ── Static build (production) ──────────────────────────────────────────────────

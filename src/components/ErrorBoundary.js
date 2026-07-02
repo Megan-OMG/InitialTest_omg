@@ -1,4 +1,5 @@
-import React from 'react';
+import React from "react";
+import "./ErrorBoundary.css";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -11,7 +12,7 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    console.error('[ErrorBoundary]', error, info.componentStack);
+    console.error("[ErrorBoundary]", error, info.componentStack);
   }
 
   handleReset = () => {
@@ -21,10 +22,12 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="error-boundary">
+        <div className="error-boundary card">
           <h2>Something went wrong</h2>
-          <p>{this.state.error?.message || 'An unexpected UI error occurred.'}</p>
-          <button onClick={this.handleReset}>Try Again</button>
+          <p>{this.state.error?.message || "An unexpected error occurred."}</p>
+          <button className="btn-primary" onClick={this.handleReset}>
+            Try again
+          </button>
         </div>
       );
     }

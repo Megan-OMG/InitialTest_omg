@@ -1,13 +1,17 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { fetchDashboard } from '../api/blockchain.api';
-import { POLL_INTERVAL_MS } from '../constants';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { fetchDashboard } from "../api/blockchain.api";
+import { POLL_INTERVAL_MS } from "../constants";
+
+const FAILURES_BEFORE_OFFLINE = 2;
 
 const useBlockchain = (pollInterval = POLL_INTERVAL_MS) => {
   const [chain, setChain] = useState(null);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isOffline, setIsOffline] = useState(false);
   const intervalRef = useRef(null);
+  const failureCountRef = useRef(0);
 
   const refresh = useCallback(async () => {
     try {
@@ -15,20 +19,56 @@ const useBlockchain = (pollInterval = POLL_INTERVAL_MS) => {
       setChain(chainData);
       setStats(statsData);
       setError(null);
+      setIsOffline(false);
+      failureCountRef.current = 0;
     } catch (err) {
-      setError(err.message || 'Failed to connect to the blockchain API.');
+      failureCountRef.current += 1;
+      setError(err.message || "Failed to connect to the blockchain API.");
+      if (failureCountRef.current >= FAILURES_BEFORE_OFFLINE) {
+        setIsOffline(true);
+      }
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    refresh();
+  const startInterval = useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(refresh, pollInterval);
-    return () => clearInterval(intervalRef.current);
   }, [refresh, pollInterval]);
 
-  return { chain, stats, loading, error, refresh };
+  const pausePolling = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  const resumePolling = useCallback(async () => {
+    failureCountRef.current = 0;
+    setError(null);
+    await refresh();
+    startInterval();
+  }, [refresh, startInterval]);
+
+  useEffect(() => {
+    refresh();
+    startInterval();
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [refresh, startInterval]);
+
+  return {
+    chain,
+    stats,
+    loading,
+    error,
+    isOffline,
+    refresh,
+    pausePolling,
+    resumePolling,
+  };
 };
 
 export default useBlockchain;

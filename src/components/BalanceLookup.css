@@ -1,0 +1,33 @@
+/* BalanceLookup.css */
+.balance-lookup-form {
+  display: flex;
+  gap: 8px;
+}
+
+.balance-lookup-form input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.balance-lookup-form input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.balance-result {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.balance-value {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 600;
+  margin-top: 4px;
+}

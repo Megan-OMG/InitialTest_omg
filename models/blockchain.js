@@ -1,7 +1,7 @@
-const crypto = require('crypto');
+const crypto = require("crypto");
 
 class Block {
-  constructor(timestamp, transactions, previousHash = '') {
+  constructor(timestamp, transactions, previousHash = "") {
     this.timestamp = timestamp;
     this.transactions = transactions;
     this.previousHash = previousHash;
@@ -11,23 +11,36 @@ class Block {
 
   calculateHash() {
     return crypto
-      .createHash('sha256')
+      .createHash("sha256")
       .update(
         this.previousHash +
           this.timestamp +
           JSON.stringify(this.transactions) +
-          this.nonce
+          this.nonce,
       )
-      .digest('hex');
+      .digest("hex");
   }
-
   mineBlock(difficulty) {
-    const target = Array(difficulty + 1).join('0');
+    return new Promise((resolve) => {
+      const target = Array(difficulty + 1).join("0");
+      const CHUNK_SIZE = 10000; // hashes per tick before yielding
 
-    while (this.hash.substring(0, difficulty) !== target) {
-      this.nonce++;
-      this.hash = this.calculateHash();
-    }
+      const mine = () => {
+        let count = 0;
+        while (this.hash.substring(0, difficulty) !== target) {
+          this.nonce++;
+          this.hash = this.calculateHash();
+          count++;
+          if (count >= CHUNK_SIZE) {
+            setImmediate(mine); // yield back to event loop
+            return;
+          }
+        }
+        resolve();
+      };
+
+      mine();
+    });
   }
 
   hasValidTransactions() {
@@ -41,35 +54,29 @@ class Block {
 }
 
 class Transaction {
-  constructor(fromAddress, toAddress, amount) {
+  constructor(fromAddress, toAddress, amount, timestamp = Date.now()) {
     this.fromAddress = fromAddress;
     this.toAddress = toAddress;
     this.amount = amount;
-    this.timestamp = Date.now();
-    this.signature = '';
+    this.timestamp = timestamp;
+    this.signature = "";
   }
-
   calculateHash() {
     return crypto
-      .createHash('sha256')
+      .createHash("sha256")
       .update(this.fromAddress + this.toAddress + this.amount + this.timestamp)
-      .digest('hex');
+      .digest("hex");
   }
 
   signTransaction(signingKey) {
     try {
       const publicKey = crypto.createPublicKey(signingKey);
-      const publicKeyDer = publicKey.export({ type: 'spki', format: 'der' });
-      const publicKeyHex = publicKeyDer.toString('hex');
+      const publicKeyDer = publicKey.export({ type: "spki", format: "der" });
+      this.fromAddress = publicKeyDer.toString("hex");
 
-      if (this.fromAddress && this.fromAddress !== publicKeyHex && this.fromAddress.length > 0) {
-        this.fromAddress = publicKeyHex;
-      } else {
-        this.fromAddress = publicKeyHex;
-      }
       const hashTx = this.calculateHash();
-      const signature = crypto.sign(null, Buffer.from(hashTx), signingKey);
-      this.signature = signature.toString('hex');
+      const signature = crypto.sign("sha256", Buffer.from(hashTx), signingKey); // was null
+      this.signature = signature.toString("hex");
     } catch (error) {
       throw new Error(`Unable to sign transaction: ${error.message}`);
     }
@@ -77,23 +84,20 @@ class Transaction {
 
   isValid() {
     if (this.fromAddress === null) return true;
-
-    if (!this.signature || this.signature.length === 0) {
-      return false;
-    }
+    if (!this.signature || this.signature.length === 0) return false;
 
     try {
       const publicKey = crypto.createPublicKey({
-        key: Buffer.from(this.fromAddress, 'hex'),
-        format: 'der',
-        type: 'spki',
+        key: Buffer.from(this.fromAddress, "hex"),
+        format: "der",
+        type: "spki",
       });
 
       return crypto.verify(
-        null,
+        "sha256", // was null
         Buffer.from(this.calculateHash()),
         publicKey,
-        Buffer.from(this.signature, 'hex')
+        Buffer.from(this.signature, "hex"),
       );
     } catch {
       return false;
@@ -110,23 +114,27 @@ class Blockchain {
   }
 
   createGenesisBlock() {
-    return new Block(Date.now(), [], '0');
+    return new Block(Date.now(), [], "0");
   }
 
   getLatestBlock() {
     return this.chain[this.chain.length - 1];
   }
 
-  minePendingTransactions(miningRewardAddress) {
-    const rewardTx = new Transaction(null, miningRewardAddress, this.miningReward);
+  async minePendingTransactions(miningRewardAddress) {
+    const rewardTx = new Transaction(
+      null,
+      miningRewardAddress,
+      this.miningReward,
+    );
     this.pendingTransactions.push(rewardTx);
 
     const block = new Block(
       Date.now(),
       this.pendingTransactions,
-      this.getLatestBlock().hash
+      this.getLatestBlock().hash,
     );
-    block.mineBlock(this.difficulty);
+    await block.mineBlock(this.difficulty);
 
     this.chain.push(block);
     this.pendingTransactions = [];
@@ -134,11 +142,11 @@ class Blockchain {
 
   addTransaction(transaction) {
     if (!transaction.fromAddress || !transaction.toAddress) {
-      throw new Error('Transaction must include from and to address');
+      throw new Error("Transaction must include from and to address");
     }
 
     if (!transaction.isValid()) {
-      throw new Error('Cannot add unsigned or invalid transaction to chain');
+      throw new Error("Cannot add unsigned or invalid transaction to chain");
     }
 
     this.pendingTransactions.push(transaction);

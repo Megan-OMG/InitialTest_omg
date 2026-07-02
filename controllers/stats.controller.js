@@ -1,17 +1,17 @@
-const { blockchain } = require('../models');
-const { sendSuccess } = require('../utils/response');
+const models = require("../models");
+const { sendSuccess } = require("../utils/response");
 
 const getStats = (req, res) => {
-  const allTransactions = blockchain.getAllTransactions();
+  const allTransactions = models.blockchain.getAllTransactions();
 
   sendSuccess(res, {
-    chainLength: blockchain.chain.length,
-    pendingTransactions: blockchain.pendingTransactions.length,
+    chainLength: models.blockchain.chain.length,
+    pendingTransactions: models.blockchain.pendingTransactions.length,
     totalTransactions: allTransactions.length,
-    difficulty: blockchain.difficulty,
-    miningReward: blockchain.miningReward,
-    isValid: blockchain.isChainValid(),
-    latestBlockHash: blockchain.getLatestBlock().hash,
+    difficulty: models.blockchain.difficulty,
+    miningReward: models.blockchain.miningReward,
+    isValid: models.blockchain.isChainValid(),
+    latestBlockHash: models.blockchain.getLatestBlock().hash,
   });
 };
 
