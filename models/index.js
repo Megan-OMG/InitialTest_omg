@@ -9,7 +9,7 @@ let blockchain = new Blockchain(
   config.blockchain.miningReward
 );
 
-const seedDemoData = () => {
+const seedDemoData = async () => {
   if (!config.demoData.enabled) {
     return;
   }
@@ -22,7 +22,7 @@ const seedDemoData = () => {
   }
 
   if (blockchain.pendingTransactions.length > 0) {
-    blockchain.minePendingTransactions(config.blockchain.initialMinerAddress);
+    await blockchain.minePendingTransactions(config.blockchain.initialMinerAddress);
     logger.info('Seeded demo blockchain data');
   }
 };
@@ -36,7 +36,7 @@ const initializeBlockchain = async () => {
     return;
   }
 
-  seedDemoData();
+  await seedDemoData();
   if (blockchain.pendingTransactions.length > 0) {
     await persistenceService.save(blockchain);
   }

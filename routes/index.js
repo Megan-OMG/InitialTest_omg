@@ -1,4 +1,5 @@
 const { Router } = require('express');
+const noCache = require('../middleware/cache.middleware');
 const blockchainRoutes = require('./blockchain.routes');
 const transactionRoutes = require('./transaction.routes');
 const miningRoutes = require('./mining.routes');
@@ -8,6 +9,7 @@ const walletRoutes = require('./wallet.routes');
 
 const router = Router();
 
+router.use(noCache);
 router.use('/chain', blockchainRoutes);
 router.use('/transactions', transactionRoutes);
 router.use('/mine', miningRoutes);

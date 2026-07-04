@@ -1,46 +1,56 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import './StatsPanel.css';
 
-const StatsPanel = ({ stats, onMine }) => {
+const StatItem = ({ label, value, className = '' }) => (
+  <div className="stat-item">
+    <div className="stat-label">{label}</div>
+    <motion.div
+      className={`stat-value ${className}`}
+      key={String(value)}
+      initial={{ opacity: 0.5, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      {value}
+    </motion.div>
+  </div>
+);
+
+const StatsPanel = ({ stats, onMine, mining }) => {
   if (!stats) return null;
 
   return (
-    <div className="stats-panel">
-      <h2 className="panel-title">Blockchain Stats</h2>
-      
+    <motion.div
+      className="panel stats-panel"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+    >
+      <h2 className="panel-title">Overview</h2>
+
       <div className="stats-grid">
-        <div className="stat-item">
-          <div className="stat-label">Chain Length</div>
-          <div className="stat-value">{stats.chainLength}</div>
-        </div>
-        
-        <div className="stat-item">
-          <div className="stat-label">Pending Transactions</div>
-          <div className="stat-value">{stats.pendingTransactions}</div>
-        </div>
-        
-        <div className="stat-item">
-          <div className="stat-label">Difficulty</div>
-          <div className="stat-value">{stats.difficulty}</div>
-        </div>
-        
-        <div className="stat-item">
-          <div className="stat-label">Mining Reward</div>
-          <div className="stat-value">{stats.miningReward}</div>
-        </div>
-        
-        <div className="stat-item status">
-          <div className="stat-label">Chain Status</div>
-          <div className={`stat-value ${stats.isValid ? 'valid' : 'invalid'}`}>
-            {stats.isValid ? '✓ Valid' : '✗ Invalid'}
-          </div>
-        </div>
+        <StatItem label="Chain Length" value={stats.chainLength} />
+        <StatItem label="Pending" value={stats.pendingTransactions} />
+        <StatItem label="Difficulty" value={stats.difficulty} />
+        <StatItem label="Mining Reward" value={stats.miningReward} />
+        <StatItem
+          label="Status"
+          value={stats.isValid ? 'Valid' : 'Invalid'}
+          className={stats.isValid ? 'valid' : 'invalid'}
+        />
       </div>
-      
-      <button className="mine-button" onClick={onMine}>
-        ⛏️ Mine Block
-      </button>
-    </div>
+
+      <motion.button
+        className="btn btn-mine"
+        onClick={onMine}
+        disabled={mining}
+        whileTap={{ scale: 0.98 }}
+        animate={mining ? { opacity: 0.7 } : { opacity: 1 }}
+      >
+        {mining ? 'Mining…' : 'Mine Block'}
+      </motion.button>
+    </motion.div>
   );
 };
 

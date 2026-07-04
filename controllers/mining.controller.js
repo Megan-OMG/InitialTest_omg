@@ -1,15 +1,16 @@
-const { blockchain } = require('../models');
+const models = require('../models');
 const persistenceService = require('../services/persistence.service');
 const { sendSuccess } = require('../utils/response');
 const logger = require('../utils/logger');
 
-const mineBlock = (req, res, next) => {
+const mineBlock = async (req, res, next) => {
   try {
+    const { blockchain } = models;
     const miningRewardAddress = req.body.miningRewardAddress || 'miner1';
 
     logger.info(`Mining block for reward address: ${miningRewardAddress}`);
-    blockchain.minePendingTransactions(miningRewardAddress);
-    persistenceService.save(blockchain);
+    await blockchain.minePendingTransactions(miningRewardAddress);
+    await persistenceService.save(blockchain);
     logger.info(`Block mined successfully: ${blockchain.getLatestBlock().hash}`);
 
     sendSuccess(res, {

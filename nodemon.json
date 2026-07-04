@@ -1,0 +1,3 @@
+{
+  "ignore": ["blockchain.json", "tests/.tmp-blockchain.json", "build/**", "src/**", "public/**"]
+}

@@ -13,8 +13,8 @@ export const fetchPendingTransactions = () =>
 export const fetchAllTransactions = () =>
   client.get(ENDPOINTS.TRANSACTIONS_ALL);
 
-export const addTransaction = (fromAddress, toAddress, amount, signature = '') =>
-  client.post(ENDPOINTS.TRANSACTIONS, { fromAddress, toAddress, amount, signature });
+export const addTransaction = (fromAddress, toAddress, amount, signature = '', timestamp = Date.now()) =>
+  client.post(ENDPOINTS.TRANSACTIONS, { fromAddress, toAddress, amount, signature, timestamp });
 
 export const createWallet = () => client.post(ENDPOINTS.WALLETS);
 

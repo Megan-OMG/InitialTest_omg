@@ -21,12 +21,15 @@ class Block {
       .digest('hex');
   }
 
-  mineBlock(difficulty) {
+  async mineBlock(difficulty) {
     const target = Array(difficulty + 1).join('0');
 
     while (this.hash.substring(0, difficulty) !== target) {
       this.nonce++;
       this.hash = this.calculateHash();
+      if (this.nonce % 10000 === 0) {
+        await new Promise((resolve) => setImmediate(resolve));
+      }
     }
   }
 
@@ -68,7 +71,7 @@ class Transaction {
         this.fromAddress = publicKeyHex;
       }
       const hashTx = this.calculateHash();
-      const signature = crypto.sign(null, Buffer.from(hashTx), signingKey);
+      const signature = crypto.sign('sha256', Buffer.from(hashTx), signingKey);
       this.signature = signature.toString('hex');
     } catch (error) {
       throw new Error(`Unable to sign transaction: ${error.message}`);
@@ -90,7 +93,7 @@ class Transaction {
       });
 
       return crypto.verify(
-        null,
+        'sha256',
         Buffer.from(this.calculateHash()),
         publicKey,
         Buffer.from(this.signature, 'hex')
@@ -117,7 +120,7 @@ class Blockchain {
     return this.chain[this.chain.length - 1];
   }
 
-  minePendingTransactions(miningRewardAddress) {
+  async minePendingTransactions(miningRewardAddress) {
     const rewardTx = new Transaction(null, miningRewardAddress, this.miningReward);
     this.pendingTransactions.push(rewardTx);
 
@@ -126,7 +129,7 @@ class Blockchain {
       this.pendingTransactions,
       this.getLatestBlock().hash
     );
-    block.mineBlock(this.difficulty);
+    await block.mineBlock(this.difficulty);
 
     this.chain.push(block);
     this.pendingTransactions = [];

@@ -1,11 +1,12 @@
-const { blockchain, Transaction } = require('../models');
+const models = require('../models');
 const persistenceService = require('../services/persistence.service');
 const { sendSuccess, sendCreated, sendError } = require('../utils/response');
 const { isValidAddress, isValidAmount, sanitizeAddress, sanitizeAmount } = require('../utils/validator');
 
 const addTransaction = (req, res, next) => {
   try {
-    const { fromAddress, toAddress, amount, signature } = req.body;
+    const { blockchain, Transaction } = models;
+    const { fromAddress, toAddress, amount, signature, timestamp } = req.body;
 
     if (!isValidAddress(fromAddress) || !isValidAddress(toAddress)) {
       return sendError(res, 'Invalid wallet address format', 400);
@@ -21,6 +22,10 @@ const addTransaction = (req, res, next) => {
       sanitizeAmount(amount)
     );
 
+    if (timestamp) {
+      transaction.timestamp = Number(timestamp);
+    }
+
     if (signature) {
       transaction.signature = signature;
     }
@@ -33,11 +38,13 @@ const addTransaction = (req, res, next) => {
       transaction,
     });
   } catch (err) {
+    err.status = 400;
     next(err);
   }
 };
 
 const getPendingTransactions = (req, res) => {
+  const { blockchain } = models;
   sendSuccess(res, {
     pendingTransactions: blockchain.pendingTransactions,
     count: blockchain.pendingTransactions.length,
@@ -45,6 +52,7 @@ const getPendingTransactions = (req, res) => {
 };
 
 const getAllTransactions = (req, res) => {
+  const { blockchain } = models;
   const transactions = blockchain.getAllTransactions();
   sendSuccess(res, { transactions, count: transactions.length });
 };

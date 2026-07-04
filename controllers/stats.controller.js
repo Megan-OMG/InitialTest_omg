@@ -1,7 +1,8 @@
-const { blockchain } = require('../models');
+const models = require('../models');
 const { sendSuccess } = require('../utils/response');
 
 const getStats = (req, res) => {
+  const { blockchain } = models;
   const allTransactions = blockchain.getAllTransactions();
 
   sendSuccess(res, {
