@@ -67,11 +67,23 @@
   font-family: 'BlockchainFont', sans-serif;
 }
 
-.mine-button:hover {
+.mine-button:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
 }
 
-.mine-button:active {
+.mine-button:active:not(:disabled) {
   transform: translateY(0);
+}
+
+.mine-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mine-hint {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: #6b7280;
+  text-align: center;
 }

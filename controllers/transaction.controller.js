@@ -5,7 +5,7 @@ const { isValidAddress, isValidAmount, sanitizeAddress, sanitizeAmount } = requi
 
 const addTransaction = (req, res, next) => {
   try {
-    const { fromAddress, toAddress, amount, signature } = req.body;
+    const { fromAddress, toAddress, amount, signature, timestamp } = req.body;
 
     if (!isValidAddress(fromAddress) || !isValidAddress(toAddress)) {
       return sendError(res, 'Invalid wallet address format', 400);
@@ -15,14 +15,37 @@ const addTransaction = (req, res, next) => {
       return sendError(res, 'Amount must be a positive number', 400);
     }
 
+    const sanitizedFrom = sanitizeAddress(fromAddress);
+    const sanitizedAmount = sanitizeAmount(amount);
+
     const transaction = new Transaction(
-      sanitizeAddress(fromAddress),
+      sanitizedFrom,
       sanitizeAddress(toAddress),
-      sanitizeAmount(amount)
+      sanitizedAmount
     );
+
+    // Use the client's timestamp so the signed hash matches what we verify
+    if (Number.isFinite(Number(timestamp))) {
+      transaction.timestamp = Number(timestamp);
+    }
 
     if (signature) {
       transaction.signature = signature;
+    }
+
+    if (!transaction.isValid()) {
+      return sendError(res, 'Invalid transaction signature', 400);
+    }
+
+    // available balance should be confirmed balance minus already-pending outgoing
+    const confirmedBalance = blockchain.getBalanceOfAddress(sanitizedFrom);
+    const pendingOutgoing = blockchain.pendingTransactions
+      .filter((tx) => tx.fromAddress === sanitizedFrom)
+      .reduce((sum, tx) => sum + tx.amount, 0);
+    const available = confirmedBalance - pendingOutgoing;
+
+    if (sanitizedAmount > available) {
+      return sendError(res, `Insufficient balance. Available: ${available}`, 400);
     }
 
     blockchain.addTransaction(transaction);
@@ -31,6 +54,7 @@ const addTransaction = (req, res, next) => {
     sendCreated(res, {
       message: 'Transaction added to pending pool',
       transaction,
+      transactionHash: transaction.hash,
     });
   } catch (err) {
     next(err);

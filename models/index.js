@@ -42,7 +42,11 @@ const initializeBlockchain = async () => {
   }
 };
 
-initializeBlockchain();
+initializeBlockchain().then(() => {
+  logger.info('Blockchain initialized');
+}).catch((error) => {
+  logger.error('Error initializing blockchain:', error);
+});
 
 module.exports = {
   get blockchain() {

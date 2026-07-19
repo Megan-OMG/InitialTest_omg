@@ -1,0 +1,131 @@
+.explorer {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  padding: 25px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+
+.explorer-subtitle {
+  margin: -8px 0 16px;
+  color: #4b5563;
+  font-size: 0.92rem;
+}
+
+.explorer-search {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.explorer-search input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: 'TechMono', monospace;
+}
+
+.explorer-search input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.explorer-search .submit-button {
+  width: auto;
+  padding: 12px 20px;
+  margin-top: 0;
+}
+
+.explorer-result {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.explorer-result-title {
+  font-family: 'BlockchainFont', sans-serif;
+  font-weight: bold;
+  color: #1f2937;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.explorer-field {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 0;
+  border-bottom: 1px dashed #e5e7eb;
+}
+
+.explorer-label {
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.explorer-value {
+  color: #334155;
+  font-size: 0.9rem;
+  text-align: right;
+  word-break: break-word;
+}
+
+.explorer-value.mono,
+.mono {
+  font-family: 'TechMono', monospace;
+}
+
+.explorer-tx-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.explorer-tx-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  overflow-x: auto;
+}
+
+.explorer-tx-row .arrow {
+  color: #9ca3af;
+}
+
+.explorer-tx-row .amount {
+  margin-left: auto;
+  font-weight: bold;
+  color: #4338ca;
+  font-family: 'TechMono', monospace;
+}
+
+.badge {
+  font-size: 0.7rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.badge.confirmed {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}

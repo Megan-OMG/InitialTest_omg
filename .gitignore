@@ -3,3 +3,7 @@
 .env
 *.log
 npm-debug.log*
+
+/blockchain.json
+/artifacts
+/cache

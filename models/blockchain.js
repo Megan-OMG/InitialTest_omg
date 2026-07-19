@@ -47,6 +47,7 @@ class Transaction {
     this.amount = amount;
     this.timestamp = Date.now();
     this.signature = '';
+    this.hash = '';
   }
 
   calculateHash() {
@@ -54,6 +55,18 @@ class Transaction {
       .createHash('sha256')
       .update(this.fromAddress + this.toAddress + this.amount + this.timestamp)
       .digest('hex');
+  }
+  
+  computeHash() {
+    return crypto
+      .createHash('sha256')
+      .update(this.fromAddress + this.toAddress + this.amount + this.timestamp + this.signature)
+      .digest('hex');
+  }
+
+  updateHash() {
+    this.hash = this.computeHash();
+    return this.hash;
   }
 
   signTransaction(signingKey) {
@@ -119,6 +132,7 @@ class Blockchain {
 
   minePendingTransactions(miningRewardAddress) {
     const rewardTx = new Transaction(null, miningRewardAddress, this.miningReward);
+    rewardTx.updateHash();
     this.pendingTransactions.push(rewardTx);
 
     const block = new Block(
@@ -141,6 +155,7 @@ class Blockchain {
       throw new Error('Cannot add unsigned or invalid transaction to chain');
     }
 
+    transaction.updateHash();
     this.pendingTransactions.push(transaction);
   }
 
@@ -172,6 +187,52 @@ class Blockchain {
 
   getAllTransactions() {
     return this.chain.flatMap((block) => block.transactions);
+  }
+
+  findBlockByHash(hash) {
+    const height = this.chain.findIndex((block) => block.hash === hash);
+    return height >= 0 ? { block: this.chain[height], height } : null;
+  }
+
+  findTransactionByHash(hash) {
+    for (let height = 0; height < this.chain.length; height++) {
+      const transaction = this.chain[height].transactions.find((tx) => tx.hash === hash);
+      if (transaction) {
+        return { transaction, status: 'confirmed', blockHeight: height, blockHash: this.chain[height].hash };
+      }
+    }
+
+    const pending = this.pendingTransactions.find((tx) => tx.hash === hash);
+    if (pending) {
+      return { transaction: pending, status: 'pending', blockHeight: null, blockHash: null };
+    }
+
+    return null;
+  }
+
+  getAddressSummary(address) {
+    const transactions = [];
+
+    this.chain.forEach((block, height) => {
+      block.transactions.forEach((tx) => {
+        if (tx.fromAddress === address || tx.toAddress === address) {
+          transactions.push({ ...tx, status: 'confirmed', blockHeight: height });
+        }
+      });
+    });
+
+    this.pendingTransactions.forEach((tx) => {
+      if (tx.fromAddress === address || tx.toAddress === address) {
+        transactions.push({ ...tx, status: 'pending', blockHeight: null });
+      }
+    });
+
+    return {
+      address,
+      balance: this.getBalanceOfAddress(address),
+      transactionCount: transactions.length,
+      transactions,
+    };
   }
 }
 

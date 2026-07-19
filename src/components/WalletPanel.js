@@ -1,82 +1,106 @@
 import React, { useState } from 'react';
 import './TransactionForm.css';
-import { createWallet, fetchBalance } from '../api/blockchain.api';
+import './wallet/wallet.css';
+import { useWalletContext } from '../context/WalletContext';
+import SwitchWalletModal from './SwitchWalletModal';
+import WalletOnboarding from './wallet/WalletOnboarding';
+import UnlockScreen from './wallet/UnlockScreen';
 
 const WalletPanel = () => {
-  const [wallet, setWallet] = useState(null);
-  const [balance, setBalance] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [copiedField, setCopiedField] = useState('');
+  const {
+    wallet,
+    allWallets,
+    balance,
+    hasVault,
+    isLocked,
+    generateMnemonic,
+    isHdWallet,
+    createHdWallet,
+    importHdWallet,
+    importPrivateKey,
+    unlock,
+    lock,
+    addAccount,
+    switchWallet,
+    forgetWallet,
+  } = useWalletContext();
 
-  const handleCreateWallet = async () => {
-    setLoading(true);
-    setMessage('');
+  const [isSwitchModalOpen, setIsSwitchModalOpen] = useState(false);
+  const [copied, setCopied] = useState('');
+  const [revealKey, setRevealKey] = useState(false);
 
-    try {
-      const response = await createWallet();
-      const walletData = response;
-      setWallet(walletData);
-      const balanceResponse = await fetchBalance(walletData.publicKey);
-      setBalance(balanceResponse.balance);
-      setMessage('Wallet created successfully');
-    } catch (err) {
-      setMessage(err.message || 'Failed to create wallet');
-    } finally {
-      setLoading(false);
-    }
+  const copy = (value, field) => {
+    navigator.clipboard.writeText(value).then(() => {
+      setCopied(field);
+      window.setTimeout(() => setCopied(''), 1500);
+    }).catch(() => {});
   };
 
-  const handleCopy = async (value, fieldName) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopiedField(fieldName);
-      window.setTimeout(() => setCopiedField(''), 1500);
-    } catch (error) {
-      setMessage('Unable to copy to clipboard');
+  const renderBody = () => {
+    if (!hasVault) {
+      return (
+        <WalletOnboarding
+          generateMnemonic={generateMnemonic}
+          onCreate={createHdWallet}
+          onImportMnemonic={importHdWallet}
+          onImportPrivateKey={importPrivateKey}
+        />
+      );
     }
+
+    if (isLocked || !wallet) {
+      return <UnlockScreen onUnlock={unlock} onForget={forgetWallet} />;
+    }
+
+    return (
+      <div>
+        <div className="account-summary">
+          <div className="account-label">Account #{wallet.index + 1}</div>
+          <div className="account-address">{wallet.publicKey}</div>
+          <div className="account-label">Balance</div>
+          <div className="account-balance">{balance ?? '—'}</div>
+        </div>
+
+        <div className="wallet-button-row">
+          <button type="button" className="secondary-button" onClick={() => copy(wallet.publicKey, 'address')}>
+            {copied === 'address' ? 'Copied!' : 'Copy Address'}
+          </button>
+          <button type="button" className="secondary-button" onClick={() => setIsSwitchModalOpen(true)} disabled={allWallets.length <= 1}>
+            Switch ({allWallets.length})
+          </button>
+        </div>
+
+        <div className="wallet-button-row" style={{ marginTop: 10 }}>
+          {isHdWallet() && (
+            <button type="button" className="secondary-button" onClick={addAccount}>Add Account</button>
+          )}
+          <button type="button" className="secondary-button" onClick={lock}>Lock</button>
+        </div>
+
+        <button type="button" className="link-button" onClick={() => setRevealKey((v) => !v)}>
+          {revealKey ? 'Hide private key' : 'Reveal private key'}
+        </button>
+        {revealKey && (
+          <div className="reveal-box" onClick={() => copy(wallet.privateKeyHex, 'privateKey')} title="Click to copy">
+            {wallet.privateKeyHex} {copied === 'privateKey' ? '(copied)' : ''}
+          </div>
+        )}
+
+        <SwitchWalletModal
+          isOpen={isSwitchModalOpen}
+          onClose={() => setIsSwitchModalOpen(false)}
+          wallets={allWallets}
+          currentWallet={wallet}
+          onSwitch={switchWallet}
+        />
+      </div>
+    );
   };
 
   return (
     <div className="transaction-form">
-      <h2 className="panel-title">Wallet Studio</h2>
-      <p className="panel-subtitle">Generate a key pair and inspect balance.</p>
-
-      <button type="button" className="submit-button" onClick={handleCreateWallet} disabled={loading}>
-        {loading ? 'Generating...' : 'Create Wallet'}
-      </button>
-
-      {message && <div className={`form-message ${message.includes('success') ? 'success' : 'error'}`}>{message}</div>}
-
-      <div className="wallet-note">Tip: copy your keys before leaving the page.</div>
-
-      {wallet && (
-        <div className="form-group">
-          <label>Public Key</label>
-          <div className="value-row">
-            <div className="field-value hash">{wallet.publicKey}</div>
-            <button type="button" className="copy-button" onClick={() => handleCopy(wallet.publicKey, 'publicKey')}>
-              {copiedField === 'publicKey' ? 'Copied!' : 'Copy'}
-            </button>
-          </div>
-
-          <label>Private Key</label>
-          <div className="value-row">
-            <div className="field-value hash">{wallet.privateKey}</div>
-            <button type="button" className="copy-button" onClick={() => handleCopy(wallet.privateKey, 'privateKey')}>
-              {copiedField === 'privateKey' ? 'Copied!' : 'Copy'}
-            </button>
-          </div>
-
-          <label>Balance</label>
-          <div className="value-row">
-            <div className="field-value">{balance}</div>
-            <button type="button" className="copy-button" onClick={() => handleCopy(String(balance), 'balance')} disabled={balance === null}>
-              {copiedField === 'balance' ? 'Copied!' : 'Copy'}
-            </button>
-          </div>
-        </div>
-      )}
+      <h2 className="panel-title">Wallet</h2>
+      {renderBody()}
     </div>
   );
 };

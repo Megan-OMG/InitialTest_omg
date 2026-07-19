@@ -38,6 +38,7 @@
   margin-bottom: 15px;
   font-size: 0.9rem;
   font-weight: 500;
+  word-break: break-word;
 }
 
 .form-message.success {
@@ -71,6 +72,31 @@
 
 .submit-button:disabled {
   opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.secondary-button {
+  width: 100%;
+  padding: 13px;
+  margin-top: 10px;
+  background: #ffffff;
+  color: #667eea;
+  border: 1px solid #667eea;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  font-family: 'BlockchainFont', sans-serif;
+}
+
+.secondary-button:hover:not(:disabled) {
+  background: #eef2ff;
+  transform: translateY(-1px);
+}
+
+.secondary-button:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
